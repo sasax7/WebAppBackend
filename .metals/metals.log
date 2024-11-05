@@ -1785,3 +1785,19 @@ package controllers;
 Nov. 05, 2024 7:38:39 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
 INFORMATION: Unsupported notification method: $/setTrace
 2024.11.05 19:53:48 INFO  Started: Metals version 1.3.5+171-b77fedf0-SNAPSHOT in folders 'C:\Users\sti\OneDrive - Leicom AG\Desktop\HTWG\Web_App\backend' for client Visual Studio Code - Insiders 1.95.0-insider.
+2024.11.05 19:53:54 WARN  Flyway upgrade recommended: H2 2.3.232 is newer than this version of Flyway and support has not been tested. The latest supported version of H2 is 2.2.224.
+2024.11.05 19:53:55 INFO  Attempting to connect to the build server...
+2024.11.05 19:53:55 INFO  Found a Bloop server running
+2024.11.05 19:53:58 INFO  tracing is disabled for protocol BSP, to enable tracing of incoming and outgoing JSON messages create an empty file at C:\Users\sti\OneDrive - Leicom AG\Desktop\HTWG\Web_App\backend\.metals\bsp.trace.json or C:\Users\sti\AppData\Local\scalameta\metals\cache\bsp.trace.json
+2024.11.05 19:53:58 INFO  Attempting to connect to the build server...
+2024.11.05 19:53:58 INFO  Found a Bloop server running
+2024.11.05 19:53:58 INFO  Attempting to connect to the build server...
+2024.11.05 19:53:58 INFO  Found a Bloop server running
+2024.11.05 19:54:01 INFO  tracing is disabled for protocol BSP, to enable tracing of incoming and outgoing JSON messages create an empty file at C:\Users\sti\OneDrive - Leicom AG\Desktop\HTWG\Web_App\backend\project\project\.metals\bsp.trace.json or C:\Users\sti\AppData\Local\scalameta\metals\cache\bsp.trace.json
+2024.11.05 19:54:01 INFO  tracing is disabled for protocol BSP, to enable tracing of incoming and outgoing JSON messages create an empty file at C:\Users\sti\OneDrive - Leicom AG\Desktop\HTWG\Web_App\backend\project\.metals\bsp.trace.json or C:\Users\sti\AppData\Local\scalameta\metals\cache\bsp.trace.json
+2024.11.05 19:54:01 INFO  time: Connected to build server in 6.39s
+2024.11.05 19:54:01 INFO  Connected to Build server: Bloop v2.0.3
+2024.11.05 19:54:02 INFO  time: Imported build in 0.34s
+2024.11.05 19:54:02 INFO  running doctor check
+2024.11.05 19:54:02 INFO  java targets: root-test, root, backend-build, backend-build-build
+2024.11.05 19:54:06 WARN  2.12.16 is no longer supported in the current Metals versions, using the last known supported version 1.3.5
