@@ -15002,3 +15002,5 @@ package controllers;
 3 errors.
 2024.11.23 21:59:30 WARN  javac exited with exit code 1
 2024.11.23 21:59:30 INFO  time: compiled root in 14s
+Nov. 23, 2024 10:17:49 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFORMATION: Unsupported notification method: $/setTrace
