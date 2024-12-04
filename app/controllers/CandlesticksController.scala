@@ -6,6 +6,10 @@ import scala.concurrent.{Future, ExecutionContext}
 import repositories.CandlesRepository
 import models.Candlestick
 import play.api.libs.json._
+case class CandlesticksBatchResponse(
+    candlesticks: Seq[Candlestick],
+    oldestTimestamp: Long
+)
 
 @Singleton
 class CandlesticksController @Inject() (
@@ -17,6 +21,9 @@ class CandlesticksController @Inject() (
   implicit val candlestickFormat: OFormat[Candlestick] =
     Json.format[Candlestick]
 
+  implicit val candlesticksBatchResponseFormat
+      : OFormat[CandlesticksBatchResponse] =
+    Json.format[CandlesticksBatchResponse]
   // Load candlesticks from the database before handling requests
   private def loadCandlesticks(): Future[Unit] =
     candlesRepository.listCandlesticks().map(_ => ())
@@ -86,7 +93,11 @@ class CandlesticksController @Inject() (
                 batchSize
               )
               .map { candlesticks =>
-                Ok(Json.toJson(candlesticks))
+                val oldestTimestamp =
+                  candlesticks.headOption.map(_.time).getOrElse(0L)
+                val response =
+                  CandlesticksBatchResponse(candlesticks, oldestTimestamp)
+                Ok(Json.toJson(response))
               }
           } catch {
             case _: Exception =>

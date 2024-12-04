@@ -40,12 +40,12 @@ class CandlesRepository @Inject() (
       (c, p) <- candlesticks join pairs on (_.pair_id === _.id)
       if p.pairName === pairName &&
         c.timeframe === timeframe &&
-        c.time < toTime // toTime is now Long
+        c.time < toTime
     } yield c
 
-    val sortedQuery = query.sortBy(_.time.asc).take(batchSize)
+    val sortedQuery = query.sortBy(_.time.desc).take(batchSize)
 
-    db.run(sortedQuery.result)
+    db.run(sortedQuery.result).map(_.reverse)
   }
 
   def deleteCandlesticksByPairId(pair_id: Long): Future[Int] = {
