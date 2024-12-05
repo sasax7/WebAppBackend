@@ -21,7 +21,6 @@ CREATE TABLE candlesticks (
   CONSTRAINT unique_candlestick UNIQUE (pair_id, timeframe, time),
   PRIMARY KEY (pair_id, timeframe, time)
 );
-
 CREATE INDEX idx_candlesticks_pair_timeframe_time
 ON candlesticks(pair_id, timeframe, time);
 
@@ -43,6 +42,21 @@ CREATE INDEX idx_candlesticks_4h ON candlesticks(time)
 WHERE timeframe = '4h';
 CREATE INDEX idx_candlesticks_1d ON candlesticks(time)
 WHERE timeframe = '1d';
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY, -- Internal user ID
+  firebase_uid TEXT NOT NULL UNIQUE, -- UID from Firebase Authentication
+  username TEXT, -- Optional custom username
+  email TEXT, -- Email for convenience/reference
+  role TEXT DEFAULT 'user', -- Role: 'admin', 'user', etc.
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Account creation date
+  last_login TIMESTAMP -- Last login time
+);
+CREATE INDEX idx_users_email ON users (email);
+CREATE INDEX idx_users_role ON users (role);
+CREATE INDEX idx_users_last_login ON users (last_login);
+CREATE INDEX idx_users_role_created_at ON users (role, created_at);
+
 
 -- Create Timeframes Table
 CREATE TABLE timeframes (

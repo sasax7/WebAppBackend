@@ -21,6 +21,11 @@ POST    /candlesticks                     controllers.CandlesticksController.cre
 GET     /candlesticks/batch               controllers.CandlesticksController.getCandlesticksBatch
 DELETE  /candlesticks/pair/:pair_id        controllers.CandlesticksController.deleteCandlesticksByPairId(pair_id: Long)
 
-
+# User Routes
+GET     /users                  controllers.UsersController.listUsers
+POST    /users                  controllers.UsersController.createUser
+GET     /users/:id              controllers.UsersController.findUserByFirebaseUid(id: String)
+DELETE  /users/:id              controllers.UsersController.deleteUser(id: Long)
+PUT     /users/:firebaseUid              controllers.UsersController.updateUser(firebaseUid: String)
 
 
