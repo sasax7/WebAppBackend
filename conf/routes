@@ -28,4 +28,12 @@ GET     /users/:id              controllers.UsersController.findUserByFirebaseUi
 DELETE  /users/:id              controllers.UsersController.deleteUser(id: Long)
 PUT     /users/:firebaseUid              controllers.UsersController.updateUser(firebaseUid: String)
 
+# Strategie Routes
+GET     /strategies/:firebaseUid     controllers.StrategyController.getStrategiesByFirebaseUid(firebaseUid: String)
+POST    /strategies/:firebaseUid     controllers.StrategyController.addStrategy(firebaseUid: String)
+POST    /indicators/:strategyId          controllers.StrategyController.addIndicator(strategyId: Long)
+POST    /stopLosses/:strategyId          controllers.StrategyController.addStopLoss(strategyId: Long)
+POST    /takeProfits/:strategyId         controllers.StrategyController.addTakeProfit(strategyId: Long)
+POST    /pricePoints/:strategyId         controllers.StrategyController.addPricePoint(strategyId: Long)
+
 
