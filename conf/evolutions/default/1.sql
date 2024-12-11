@@ -125,8 +125,8 @@ CREATE TABLE strategypricepoint (
 
 CREATE TABLE advancedtrade (
   id SERIAL PRIMARY KEY,
-  start_date DATE NOT NULL,
-  triggered_date DATE,
+  start_date TIMESTAMP NOT NULL,
+  triggered_date TIMESTAMP,
   is_buy BOOLEAN NOT NULL,
   entry_price DECIMAL(20, 10) NOT NULL,
   strategy_id INTEGER,

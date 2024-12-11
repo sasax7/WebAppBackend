@@ -139,5 +139,27 @@ class CandlesticksController @Inject() (
           )
       }
     }
+  def addCandlesticksWithAggregation: Action[JsValue] =
+    Action.async(parse.json) { request =>
+      request.body
+        .validate[Seq[Candlestick]]
+        .fold(
+          errors =>
+            Future.successful(
+              BadRequest(
+                Json.obj("status" -> "error", "message" -> "Invalid JSON")
+              )
+            ),
+          oneMinCandlesticks => {
+            candlesRepository
+              .createCandlesticks(oneMinCandlesticks)
+              .flatMap(_ =>
+                candlesRepository
+                  .aggregateAndUpdateCandlesticks(oneMinCandlesticks)
+              )
+              .map(_ => Ok(Json.obj("status" -> "success")))
+          }
+        )
+    }
 
 }

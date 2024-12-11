@@ -20,6 +20,8 @@ GET     /candlesticks                     controllers.CandlesticksController.lis
 POST    /candlesticks                     controllers.CandlesticksController.createCandlesticks
 GET     /candlesticks/batch               controllers.CandlesticksController.getCandlesticksBatch
 DELETE  /candlesticks/pair/:pair_id        controllers.CandlesticksController.deleteCandlesticksByPairId(pair_id: Long)
+POST    /candlesticks/aggregate    controllers.CandlesticksController.addCandlesticksWithAggregation
+
 
 # User Routes
 GET     /users                  controllers.UsersController.listUsers
@@ -35,5 +37,9 @@ POST    /indicators/:strategyId          controllers.StrategyController.addIndic
 POST    /stopLosses/:strategyId          controllers.StrategyController.addStopLoss(strategyId: Long)
 POST    /takeProfits/:strategyId         controllers.StrategyController.addTakeProfit(strategyId: Long)
 POST    /pricePoints/:strategyId         controllers.StrategyController.addPricePoint(strategyId: Long)
+
+# Trade Routes
+POST    /advancedTrade       controllers.AdvancedTradeController.addAdvancedTrade
+GET    /strategies/:strategyId/trades    controllers.AdvancedTradeController.getTradesByStrategy(strategyId: Long)
 
 

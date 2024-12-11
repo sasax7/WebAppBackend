@@ -27,6 +27,10 @@ case class Candlestick(
 object Candlestick {
   // JSON format for Candlestick
   implicit val format: OFormat[Candlestick] = Json.format[Candlestick]
+
+}
+object Pair {
+  implicit val format: OFormat[Pair] = Json.format[Pair]
 }
 class PairTable(tag: Tag) extends Table[Pair](tag, "pairs") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)

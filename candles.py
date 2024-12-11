@@ -1,109 +1,113 @@
-import pandas as pd
 import requests
+import time
+from datetime import datetime
 
-# Define URLs and CSV file
-candlesticks_url = "http://localhost:9000/candlesticks"
-csv_file = "btcusd_1-min_data.csv"
+# Binance Kline Endpoint
+binance_kline_url = "https://api.binance.com/api/v3/klines"
+symbol = "BTCUSDT"
+interval = "1m"
+limit = 1000  # Max limit per request
 
-batch_size = 300  # Number of rows per batch
+candlesticks_url = "http://localhost:9000/candlesticks/aggregate"
+batch_size = 300
 
 
-# Function to send a single batch to localhost
+def fetch_binance_klines(symbol, interval, limit=1000, startTime=None, endTime=None):
+    params = {
+        "symbol": symbol,
+        "interval": interval,
+        "limit": limit,
+    }
+    if startTime is not None:
+        params["startTime"] = startTime
+    if endTime is not None:
+        params["endTime"] = endTime
+
+    response = requests.get(binance_kline_url, params=params)
+    response.raise_for_status()
+    return response.json()
+
+
 def send_batch(batch_data):
     headers = {"Content-Type": "application/json"}
-    print(batch_data[:1])
-    response = requests.post(candlesticks_url, json=batch_data, headers=headers)
-
-    if response.status_code == 201:
+    print("First candlestick in this batch:", batch_data[0])
+    resp = requests.post(candlesticks_url, json=batch_data, headers=headers)
+    if resp.status_code == 200:
         print(f"Batch sent successfully! Processed {len(batch_data)} candlesticks.")
         return True
     else:
-        print(f"Failed to send batch. Status code: {response.status_code}")
-        print(response.text)
+        print(f"Failed to send batch. Status code: {resp.status_code}")
+        print(resp.text)
         return False
 
 
-# Function to aggregate and send candles for different timeframes
-def aggregate_and_send(chunk, frequency, timeframe_label):
-    try:
-        chunk["Timestamp"] = pd.to_datetime(chunk["Timestamp"], unit="s")
-        resampled = (
-            chunk.resample(frequency, on="Timestamp")
-            .agg(
-                {
-                    "Open": "first",
-                    "High": "max",
-                    "Low": "min",
-                    "Close": "last",
-                    "Volume": "sum",
-                }
-            )
-            .dropna()
-            .reset_index()
-        )
-        print(f"Resampled data for frequency '{frequency}':")
-        print(resampled.head())  # Debugging line
+# Define start time: Jan 1, 2018 00:00:00 UTC
+start_dt = datetime(2020, 1, 1)
+startTime = int(start_dt.timestamp() * 1000)  # in ms
 
-        batch_data = [
-            {
-                "open": row["Open"],
-                "high": row["High"],
-                "low": row["Low"],
-                "close": row["Close"],
-                "time": int(row["Timestamp"].timestamp())
-                * 1000,  # Convert to milliseconds
-                "timeframe": timeframe_label,
-                "volume": row["Volume"],
-                "pair_id": 1,  # Corresponds to BTCUSD pair ID
-            }
-            for _, row in resampled.iterrows()
-        ]
-        send_batch(batch_data)
-    except Exception as e:
-        print(f"Error in aggregate_and_send with frequency '{frequency}': {e}")
+# Current time in ms
+endTime = int(time.time() * 1000)
 
-
-# Read and process data in chunks
-print(f"Processing and sending data in batches of {batch_size}...")
 total_sent = 0
+request_count = 0
 
-freq_mapping = {"5T": "5m", "1H": "1h", "1D": "1d"}
+print("Fetching klines from Binance starting from 2018 to now...")
 
-for chunk_number, chunk in enumerate(
-    pd.read_csv(csv_file, chunksize=batch_size), start=1
-):
-    print(f"Preparing batch {chunk_number}...")
-    print(f"Columns in chunk: {chunk.columns.tolist()}")  # Debugging line
+while True:
+    # If startTime is beyond current time, break
+    if startTime > endTime:
+        print("Reached current time. Stopping.")
+        break
 
-    # Prepare candlestick data for the current chunk
-    try:
-        batch_data = [
+    request_count += 1
+    print(f"Request #{request_count}: startTime={startTime}")
+
+    klines = fetch_binance_klines(symbol, interval, limit=limit, startTime=startTime)
+
+    if not klines:
+        # No more data returned
+        print("No more klines returned by Binance. Stopping.")
+        break
+
+    # Convert klines to desired format
+    candlesticks = []
+    for k in klines:
+        open_time = k[0]  # already ms
+        open_price = float(k[1])
+        high_price = float(k[2])
+        low_price = float(k[3])
+        close_price = float(k[4])
+        volume = float(k[5])
+        # trades = k[8] # if needed
+
+        candlesticks.append(
             {
-                "open": row["Open"],
-                "high": row["High"],
-                "low": row["Low"],
-                "close": row["Close"],
-                "time": int(row["Timestamp"]) * 1000,  # Convert to milliseconds
+                "open": open_price,
+                "high": high_price,
+                "low": low_price,
+                "close": close_price,
+                "time": open_time,
                 "timeframe": "1m",
-                "volume": row["Volume"] if pd.notna(row["Volume"]) else 0.0,
-                "pair_id": 1,
+                "volume": volume,
+                "pair_id": 1,  # Assuming BTCUSD pair ID is 1
             }
-            for _, row in chunk.iterrows()
-        ]
-    except KeyError as e:
-        print(f"KeyError while preparing 1m batch: {e}")
-        print("Available columns:", chunk.columns.tolist())
-        continue
+        )
 
-    # Send the current batch
-    if send_batch(batch_data):
-        total_sent += len(batch_data)
-    else:
-        print("Stopping due to an error.")
-        break  # Stop processing if there's an error
+    # Send data in batches of 300
+    for i in range(0, len(candlesticks), batch_size):
+        batch = candlesticks[i : i + batch_size]
+        if send_batch(batch):
+            total_sent += len(batch)
+        else:
+            print("Error sending batch. Stopping.")
+            break
 
-    # Aggregate and send additional timeframes
-    for frequency, timeframe_label in freq_mapping.items():
-        aggregate_and_send(chunk, frequency, timeframe_label)
+    # Update startTime for the next request
+    # The last kline's open_time is k[-1][0], we add 1 minute (60,000 ms)
+    last_open_time = klines[-1][0]
+    startTime = last_open_time + 60_000  # move to next minute
+
+    # Optional: small delay to not hit rate limits too hard
+    time.sleep(0.5)
 
 print(f"Finished processing. Total candlesticks sent: {total_sent}")
