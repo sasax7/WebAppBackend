@@ -6,10 +6,10 @@ import slick.jdbc.PostgresProfile.api._
 case class StrategyDetails(
     strategyId: Long,
     strategyName: String,
-    indicatorNames: Seq[String],
-    stopLossNames: Seq[String],
-    takeProfitNames: Seq[String],
-    pricePointNames: Seq[String]
+    indicatorNames: Seq[(Long, String)], // Include ID and name
+    stopLossNames: Seq[(Long, String)], // Include ID and name
+    takeProfitNames: Seq[(Long, String)], // Include ID and name
+    pricePointNames: Seq[(Long, String)] // Include ID and name
 )
 
 object StrategyDetails {
@@ -17,6 +17,10 @@ object StrategyDetails {
 }
 
 case class Strategy(id: Option[Long], name: String)
+object Strategy {
+  val tupled = (Strategy.apply _).tupled
+  implicit val strategyFormat: OFormat[Strategy] = Json.format[Strategy]
+}
 
 class StrategyTable(tag: Tag) extends Table[Strategy](tag, "strategies") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -24,6 +28,7 @@ class StrategyTable(tag: Tag) extends Table[Strategy](tag, "strategies") {
 
   def * = (id.?, name) <> (Strategy.tupled, Strategy.unapply)
 }
+
 case class UserStrategy(userId: Long, strategyId: Long)
 
 class UserStrategiesTable(tag: Tag)
@@ -43,6 +48,7 @@ class UserStrategiesTable(tag: Tag)
     TableQuery[StrategyTable]
   )(_.id)
 }
+
 case class StrategyIndicator(strategyId: Long, indicatorId: Long)
 
 class StrategyIndicatorTable(tag: Tag)
@@ -68,6 +74,7 @@ class StrategyIndicatorTable(tag: Tag)
     TableQuery[IndicatorNameTable]
   )(_.id)
 }
+
 case class IndicatorName(id: Option[Long], name: String)
 
 class IndicatorNameTable(tag: Tag)
@@ -77,6 +84,7 @@ class IndicatorNameTable(tag: Tag)
 
   def * = (id.?, name) <> (IndicatorName.tupled, IndicatorName.unapply)
 }
+
 case class StrategyStopLoss(strategyId: Long, stopLossId: Long)
 
 class StrategyStopLossesTable(tag: Tag)
@@ -102,6 +110,7 @@ class StrategyStopLossesTable(tag: Tag)
     TableQuery[StopLossNameTable]
   )(_.id)
 }
+
 case class StopLossName(id: Option[Long], name: String)
 
 class StopLossNameTable(tag: Tag)
@@ -111,6 +120,7 @@ class StopLossNameTable(tag: Tag)
 
   def * = (id.?, name) <> (StopLossName.tupled, StopLossName.unapply)
 }
+
 case class StrategyTakeProfit(strategyId: Long, takeProfitId: Long)
 
 class StrategyTakeProfitTable(tag: Tag)
@@ -136,6 +146,7 @@ class StrategyTakeProfitTable(tag: Tag)
     TableQuery[TakeProfitNameTable]
   )(_.id)
 }
+
 case class TakeProfitName(id: Option[Long], name: String)
 
 class TakeProfitNameTable(tag: Tag)
@@ -145,6 +156,7 @@ class TakeProfitNameTable(tag: Tag)
 
   def * = (id.?, name) <> (TakeProfitName.tupled, TakeProfitName.unapply)
 }
+
 case class StrategyPricePoint(strategyId: Long, pricePointId: Long)
 
 class StrategyPricePointTable(tag: Tag)
@@ -170,6 +182,7 @@ class StrategyPricePointTable(tag: Tag)
     TableQuery[PricePointNameTable]
   )(_.id)
 }
+
 case class PricePointName(id: Option[Long], name: String)
 
 class PricePointNameTable(tag: Tag)

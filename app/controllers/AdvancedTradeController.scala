@@ -36,40 +36,4 @@ class AdvancedTradeController @Inject() (
     }
   }
 
-  // Route for adding an advanced trade
-  def addAdvancedTrade: Action[JsValue] = Action.async(parse.json) { request =>
-    request.body
-      .validate[AddAdvancedTradeRequest]
-      .fold(
-        errors => {
-          Future.successful(
-            BadRequest(
-              Json.obj("status" -> "error", "message" -> JsError.toJson(errors))
-            )
-          )
-        },
-        tradeData => {
-          val startDate = Timestamp.from(Instant.parse(tradeData.startDate))
-          advancedTradeRepository
-            .addAdvancedTrade(
-              start_date = startDate,
-              entry_price = tradeData.entryPrice,
-              stop_loss = tradeData.stopLoss,
-              strategy_id = tradeData.strategyId,
-              pair_id = tradeData.pairId
-            )
-            .map {
-              case Some(tradeId) =>
-                Ok(Json.obj("status" -> "success", "tradeId" -> tradeId))
-              case None =>
-                BadRequest(
-                  Json.obj(
-                    "status" -> "error",
-                    "message" -> "Failed to add trade"
-                  )
-                )
-            }
-        }
-      )
-  }
 }

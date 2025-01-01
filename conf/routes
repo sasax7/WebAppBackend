@@ -39,7 +39,13 @@ POST    /takeProfits/:strategyId         controllers.StrategyController.addTakeP
 POST    /pricePoints/:strategyId         controllers.StrategyController.addPricePoint(strategyId: Long)
 
 # Trade Routes
-POST    /advancedTrade       controllers.AdvancedTradeController.addAdvancedTrade
 GET    /strategies/:strategyId/trades    controllers.AdvancedTradeController.getTradesByStrategy(strategyId: Long)
 
-
+# Backtest Routes
+POST    /initializeState      controllers.BacktestController.initializeState
+POST    /updateTimestamp/:newTimestamp    controllers.BacktestController.updateTimestamp(newTimestamp: Long)
+POST    /addTrade             controllers.BacktestController.addTrade
+POST    /addStopLoss          controllers.BacktestController.addStopLoss
+POST    /addTakeProfit        controllers.BacktestController.addTakeProfit
+POST    /addIndicator         controllers.BacktestController.addIndicator
+POST    /addPricePoint        controllers.BacktestController.addPricePoint

@@ -23,7 +23,6 @@ case class Candlestick(
     volume: Option[Double],
     pair_id: Long
 )
-
 object Candlestick {
   // JSON format for Candlestick
   implicit val format: OFormat[Candlestick] = Json.format[Candlestick]

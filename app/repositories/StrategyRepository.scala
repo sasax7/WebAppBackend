@@ -2,11 +2,10 @@ package repositories
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import models.StrategyDetails
+import models._
 import slick.jdbc.PostgresProfile.api._
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-import models._
 import models.Strategy._
 
 @Singleton
@@ -27,6 +26,76 @@ class StrategyRepository @Inject() (
   private val takeProfitNames = TableQuery[TakeProfitNameTable]
   private val strategyPricePoints = TableQuery[StrategyPricePointTable]
   private val pricePointNames = TableQuery[PricePointNameTable]
+
+  def findStrategyById(id: Long): Future[Option[Strategy]] = {
+    db.run(strategies.filter(_.id === id).result.headOption)
+  }
+
+  def findStrategyDetailsById(id: Long): Future[Option[StrategyDetails]] = {
+    val query = for {
+      strategy <- strategies.filter(_.id === id)
+    } yield strategy
+
+    val strategiesWithDetailsAction = for {
+      strategies <- query.result
+      strategyIds = strategies.map(_.id.get)
+
+      indicators <- strategyIndicators
+        .filter(_.strategyId inSet strategyIds)
+        .join(indicatorNames)
+        .on(_.indicatorId === _.id)
+        .map { case (si, i) => (si.strategyId, (i.id, i.name)) }
+        .result
+
+      stopLosses <- strategyStopLosses
+        .filter(_.strategyId inSet strategyIds)
+        .join(stopLossNames)
+        .on(_.stopLossId === _.id)
+        .map { case (ssl, sl) => (ssl.strategyId, (sl.id, sl.name)) }
+        .result
+
+      takeProfits <- strategyTakeProfits
+        .filter(_.strategyId inSet strategyIds)
+        .join(takeProfitNames)
+        .on(_.takeProfitId === _.id)
+        .map { case (stp, tp) => (stp.strategyId, (tp.id, tp.name)) }
+        .result
+
+      pricePoints <- strategyPricePoints
+        .filter(_.strategyId inSet strategyIds)
+        .join(pricePointNames)
+        .on(_.pricePointId === _.id)
+        .map { case (spp, pp) => (spp.strategyId, (pp.id, pp.name)) }
+        .result
+    } yield (strategies, indicators, stopLosses, takeProfits, pricePoints)
+
+    db.run(strategiesWithDetailsAction).map {
+      case (strategies, indicators, stopLosses, takeProfits, pricePoints) =>
+        strategies.headOption.map { strategy =>
+          StrategyDetails(
+            strategyId = strategy.id.get,
+            strategyName = strategy.name,
+            indicatorNames = indicators.collect {
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
+            },
+            stopLossNames = stopLosses.collect {
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
+            },
+            takeProfitNames = takeProfits.collect {
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
+            },
+            pricePointNames = pricePoints.collect {
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
+            }
+          )
+        }
+    }
+  }
+
   def addStrategy(firebaseUid: String, name: String): Future[Option[Long]] = {
     val action = for {
       // Find user by firebaseUid
@@ -52,6 +121,7 @@ class StrategyRepository @Inject() (
 
     db.run(action.transactionally)
   }
+
   def addIndicator(strategyId: Long, name: String): Future[Option[Long]] = {
     val action = for {
       strategyExists <- strategies.filter(_.id === strategyId).exists.result
@@ -146,28 +216,28 @@ class StrategyRepository @Inject() (
         .filter(_.strategyId inSet strategyIds)
         .join(indicatorNames)
         .on(_.indicatorId === _.id)
-        .map { case (si, i) => (si.strategyId, i.name) }
+        .map { case (si, i) => (si.strategyId, (i.id, i.name)) }
         .result
 
       stopLosses <- strategyStopLosses
         .filter(_.strategyId inSet strategyIds)
         .join(stopLossNames)
         .on(_.stopLossId === _.id)
-        .map { case (ssl, sl) => (ssl.strategyId, sl.name) }
+        .map { case (ssl, sl) => (ssl.strategyId, (sl.id, sl.name)) }
         .result
 
       takeProfits <- strategyTakeProfits
         .filter(_.strategyId inSet strategyIds)
         .join(takeProfitNames)
         .on(_.takeProfitId === _.id)
-        .map { case (stp, tp) => (stp.strategyId, tp.name) }
+        .map { case (stp, tp) => (stp.strategyId, (tp.id, tp.name)) }
         .result
 
       pricePoints <- strategyPricePoints
         .filter(_.strategyId inSet strategyIds)
         .join(pricePointNames)
         .on(_.pricePointId === _.id)
-        .map { case (spp, pp) => (spp.strategyId, pp.name) }
+        .map { case (spp, pp) => (spp.strategyId, (pp.id, pp.name)) }
         .result
     } yield (strategies, indicators, stopLosses, takeProfits, pricePoints)
 
@@ -178,16 +248,20 @@ class StrategyRepository @Inject() (
             strategyId = strategy.id.get,
             strategyName = strategy.name,
             indicatorNames = indicators.collect {
-              case (strategyId, name) if strategyId == strategy.id.get => name
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
             },
             stopLossNames = stopLosses.collect {
-              case (strategyId, name) if strategyId == strategy.id.get => name
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
             },
             takeProfitNames = takeProfits.collect {
-              case (strategyId, name) if strategyId == strategy.id.get => name
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
             },
             pricePointNames = pricePoints.collect {
-              case (strategyId, name) if strategyId == strategy.id.get => name
+              case (strategyId, (id, name)) if strategyId == strategy.id.get =>
+                (id, name)
             }
           )
         }

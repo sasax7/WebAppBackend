@@ -42,7 +42,7 @@ def send_batch(batch_data):
 
 
 # Define start time: Jan 1, 2018 00:00:00 UTC
-start_dt = datetime(2020, 1, 1)
+start_dt = datetime(2022, 10, 26)
 startTime = int(start_dt.timestamp() * 1000)  # in ms
 
 # Current time in ms

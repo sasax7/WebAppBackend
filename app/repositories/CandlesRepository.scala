@@ -16,7 +16,24 @@ class CandlesRepository @Inject() (
 
   private val candlesticks = TableQuery[CandlestickTable]
   private val pairs = TableQuery[PairTable]
+  def getCandlesticksByTimeRange(
+      pairName: String,
+      timeframe: String,
+      fromTime: Long,
+      toTime: Long
+  ): Future[Seq[Candlestick]] = {
+    val query = for {
+      (c, p) <- candlesticks join pairs on (_.pair_id === _.id)
+      if p.pairName === pairName &&
+        c.timeframe === timeframe &&
+        c.time >= fromTime &&
+        c.time <= toTime
+    } yield c
 
+    val sortedQuery = query.sortBy(_.time.asc)
+
+    db.run(sortedQuery.result)
+  }
   def listCandlesticks(): Future[Seq[Candlestick]] = {
     db.run(candlesticks.result)
   }

@@ -4,46 +4,28 @@ import slick.jdbc.PostgresProfile.api._
 import play.api.libs.json._
 import java.sql.Timestamp
 import play.api.libs.json.{Json, OFormat, OWrites, Reads}
-// Define implicit formats for Timestamp and Option[Timestamp]
-object TimestampFormat {
-  private val dateFormats = Seq(
-    new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX"), // Z-style
-    new java.text.SimpleDateFormat(
-      "yyyy-MM-dd'T'HH:mm:ss.SSSX"
-    ) // With milliseconds
-  )
+import models.TimestampFormat._
+case class AddTradeRequest(
+    entryPrice: BigDecimal,
+    stopLoss: BigDecimal
+)
 
-  implicit val timestampFormat: Format[Timestamp] = new Format[Timestamp] {
-    def reads(json: JsValue): JsResult[Timestamp] =
-      json.validate[String].flatMap { str =>
-        dateFormats.view
-          .map { format =>
-            try {
-              JsSuccess(new Timestamp(format.parse(str).getTime))
-            } catch {
-              case _: java.text.ParseException => JsError()
-            }
-          }
-          .find(_.isSuccess)
-          .getOrElse(JsError(s"Invalid date format: $str"))
-      }
-
-    def writes(ts: Timestamp): JsValue =
-      Json.toJson(dateFormats.head.format(ts)) // Primary format for output
-  }
-
-  implicit val optionTimestampFormat: Format[Option[Timestamp]] =
-    new Format[Option[Timestamp]] {
-      def reads(json: JsValue): JsResult[Option[Timestamp]] =
-        json.validateOpt[Timestamp]
-
-      def writes(optTs: Option[Timestamp]): JsValue = optTs match {
-        case Some(ts) => Json.toJson(ts)
-        case None     => JsNull
-      }
-    }
+object AddTradeRequest {
+  implicit val format: OFormat[AddTradeRequest] = Json.format[AddTradeRequest]
 }
+case class AdvancedTradeObject(
+    trade: AdvancedTrade,
+    stopLosses: Seq[StopLoss],
+    takeProfits: Seq[TakeProfit],
+    indicators: Seq[Indicator],
+    pricePoints: Seq[PricePoint],
+    tradeRRs: Seq[TradeRR]
+)
 
+object AdvancedTradeObject {
+  implicit val format: OFormat[AdvancedTradeObject] =
+    Json.format[AdvancedTradeObject]
+}
 case class AdvancedTrade(
     id: Option[Long],
     startDate: java.sql.Timestamp,
