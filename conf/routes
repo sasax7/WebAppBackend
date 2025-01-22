@@ -42,10 +42,16 @@ POST    /pricePoints/:strategyId         controllers.StrategyController.addPrice
 GET    /strategies/:strategyId/trades    controllers.AdvancedTradeController.getTradesByStrategy(strategyId: Long)
 
 # Backtest Routes
-POST    /initializeState      controllers.BacktestController.initializeState
-POST    /updateTimestamp/:newTimestamp    controllers.BacktestController.updateTimestamp(newTimestamp: Long)
-POST    /addTrade             controllers.BacktestController.addTrade
-POST    /addStopLoss          controllers.BacktestController.addStopLoss
-POST    /addTakeProfit        controllers.BacktestController.addTakeProfit
-POST    /addIndicator         controllers.BacktestController.addIndicator
-POST    /addPricePoint        controllers.BacktestController.addPricePoint
+POST    /initializeState                  controllers.BacktestController.initializeState
+POST    /updateTimestamp/:key/:newTimestamp controllers.BacktestController.updateTimestamp(key: String, newTimestamp: Long)
+POST    /addTrade/:key                    controllers.BacktestController.addTrade(key: String)
+POST    /addStopLoss/:key                 controllers.BacktestController.addStopLoss(key: String)
+POST    /addTakeProfit/:key               controllers.BacktestController.addTakeProfit(key: String)
+POST    /addIndicator/:key                controllers.BacktestController.addIndicator(key: String)
+POST    /addPricePoint/:key               controllers.BacktestController.addPricePoint(key: String)
+POST    /saveChartDrawings/:key           controllers.BacktestController.saveChartDrawings(key: String)
+GET     /getChartDrawings/:key            controllers.BacktestController.getChartDrawings(key: String)
+GET     /getState/:key                    controllers.BacktestController.getState(key: String)
+
+# WebSocket for real-time updates
+GET     /ws/:key                          controllers.BacktestWebSocketController.ws(key: String) 

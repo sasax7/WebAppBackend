@@ -26,11 +26,11 @@ class CandlesRepository @Inject() (
       (c, p) <- candlesticks join pairs on (_.pair_id === _.id)
       if p.pairName === pairName &&
         c.timeframe === timeframe &&
-        c.time >= fromTime &&
+        c.time > fromTime &&
         c.time <= toTime
     } yield c
 
-    val sortedQuery = query.sortBy(_.time.asc)
+    val sortedQuery = query.sortBy(_.time.asc).take(1440)
 
     db.run(sortedQuery.result)
   }

@@ -57,10 +57,11 @@ class AdvancedTradeRepository @Inject() (
         .headOption
     } yield timeHit
 
-    def lowestPriceQuery(
+    def highestOrLowestPriceQuery(
         startTime: Long,
         endTime: Long,
-        isBuy: Boolean
+        isBuy: Boolean,
+        entryPrice: BigDecimal
     ): DBIO[Double] = {
       val query = candlesticks
         .filter(c =>
@@ -76,10 +77,9 @@ class AdvancedTradeRepository @Inject() (
 
       priceQuery.map {
         case Some(price) => price
-        case None        => price
+        case None        => entryPrice.toDouble
       }
     }
-
     def calculateRRs(
         tradeId: Long,
         takeProfitId: Long,
@@ -93,13 +93,13 @@ class AdvancedTradeRepository @Inject() (
         val rrs = stopLosses.map { stopLoss =>
           val rr = if (isBuy) {
             if (stopLoss.highestPrice.exists(_ >= price)) {
-              (price - stopLoss.price) / (stopLoss.price - entryPrice.toDouble)
+              (price - entryPrice.toDouble) / (stopLoss.price - entryPrice.toDouble)
             } else {
               -1.0
             }
           } else {
             if (stopLoss.highestPrice.exists(_ <= price)) {
-              (stopLoss.price - price) / (entryPrice.toDouble - stopLoss.price)
+              (entryPrice.toDouble - price) / (entryPrice.toDouble - stopLoss.price)
             } else {
               -1.0
             }
@@ -123,7 +123,12 @@ class AdvancedTradeRepository @Inject() (
       timeHitOpt <- timeHitQuery
       lowestPrice <- timeHitOpt match {
         case Some(timeHit) =>
-          lowestPriceQuery(startDate.getTime, timeHit, isBuy)
+          highestOrLowestPriceQuery(
+            startDate.getTime,
+            timeHit,
+            isBuy,
+            entryPrice
+          )
         case None =>
           DBIO.successful(price)
       }
@@ -178,10 +183,11 @@ class AdvancedTradeRepository @Inject() (
         .headOption
     } yield timeHit
 
-    def highestPriceQuery(
+    def highestOrLowestPriceQuery(
         startTime: Long,
         endTime: Long,
-        isBuy: Boolean
+        isBuy: Boolean,
+        entryPrice: BigDecimal
     ): DBIO[Double] = {
       val query = candlesticks
         .filter(c =>
@@ -197,7 +203,7 @@ class AdvancedTradeRepository @Inject() (
 
       priceQuery.map {
         case Some(price) => price
-        case None        => price
+        case None        => entryPrice.toDouble
       }
     }
 
@@ -214,13 +220,13 @@ class AdvancedTradeRepository @Inject() (
         val rrs = takeProfits.map { takeProfit =>
           val rr = if (isBuy) {
             if (takeProfit.lowestPrice.exists(_ <= price)) {
-              (takeProfit.price - price) / (entryPrice.toDouble - price)
+              (takeProfit.price - entryPrice.toDouble) / (entryPrice.toDouble - price)
             } else {
               -1.0
             }
           } else {
             if (takeProfit.lowestPrice.exists(_ >= price)) {
-              (price - takeProfit.price) / (price - entryPrice.toDouble)
+              (entryPrice.toDouble - takeProfit.price) / (price - entryPrice.toDouble)
             } else {
               -1.0
             }
@@ -244,7 +250,12 @@ class AdvancedTradeRepository @Inject() (
       timeHitOpt <- timeHitQuery
       highestPrice <- timeHitOpt match {
         case Some(timeHit) =>
-          highestPriceQuery(startDate.getTime, timeHit, isBuy)
+          highestOrLowestPriceQuery(
+            startDate.getTime,
+            timeHit,
+            isBuy,
+            entryPrice
+          )
         case None =>
           DBIO.successful(price)
       }

@@ -37,8 +37,12 @@ case class OperationalState(
     percentageRiskPerTrade: Option[BigDecimal],
     currentCandlestick: Option[Candlestick],
     nextCandlesticks: Seq[Candlestick] = Seq.empty,
-    latestTradeId: Option[Long] = None
+    latestTradeId: Option[Long] = None,
+    chartDrawings: JsValue
 ) extends BacktestState {
+  def saveChartDrawings(drawings: JsValue): OperationalState = {
+    copy(chartDrawings = drawings)
+  }
   def addTakeProfit(
       price: Double,
       tradeId: Option[Long] = None,
@@ -47,13 +51,26 @@ case class OperationalState(
       ec: ExecutionContext,
       advancedTradeRepository: AdvancedTradeRepository
   ): Future[OperationalState] = {
-    val startDate = new Timestamp(newestTimestamp)
+
     val pairId = currentPair.id.getOrElse(1L)
     val idToUse = tradeId.orElse(latestTradeId)
     idToUse match {
       case Some(id) =>
+        val dateTradeTriggered = trades
+          .find(_.addAdvancedTradeObject.exists(_.trade.id.contains(id)))
+          .flatMap(_.addAdvancedTradeObject.flatMap(_.trade.triggeredDate))
+          .getOrElse(
+            new Timestamp(newestTimestamp)
+          ) // Default to newestTimestamp if not found
+
         advancedTradeRepository
-          .addTakeProfit(price, id, takeProfitNameId, pairId, startDate)
+          .addTakeProfit(
+            price,
+            id,
+            takeProfitNameId,
+            pairId,
+            dateTradeTriggered
+          )
           .map { case (takeProfit, rrs) =>
             val updatedTrades = trades.map { trade =>
               if (
@@ -90,13 +107,20 @@ case class OperationalState(
       ec: ExecutionContext,
       advancedTradeRepository: AdvancedTradeRepository
   ): Future[OperationalState] = {
-    val startDate = new Timestamp(newestTimestamp)
+
     val pairId = currentPair.id.getOrElse(1L)
     val idToUse = tradeId.orElse(latestTradeId)
     idToUse match {
       case Some(id) =>
+        val dateTradeTriggered = trades
+          .find(_.addAdvancedTradeObject.exists(_.trade.id.contains(id)))
+          .flatMap(_.addAdvancedTradeObject.flatMap(_.trade.triggeredDate))
+          .getOrElse(
+            new Timestamp(newestTimestamp)
+          ) // Default to newestTimestamp if not found
+
         advancedTradeRepository
-          .addStopLoss(price, id, stopLossNameId, pairId, startDate)
+          .addStopLoss(price, id, stopLossNameId, pairId, dateTradeTriggered)
           .map { case (stopLoss, rrs) =>
             val updatedTrades = trades.map { trade =>
               if (
@@ -480,7 +504,8 @@ object OperationalState {
             fees = fees.orElse(Some(BigDecimal(0))),
             percentageRiskPerTrade =
               percentageRiskPerTrade.orElse(Some(BigDecimal(0.02))),
-            currentCandlestick = Some(candlestick)
+            currentCandlestick = Some(candlestick),
+            chartDrawings = Json.obj()
           )
         case _ =>
           throw new Exception(
